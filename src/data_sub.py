@@ -14,10 +14,13 @@ import numpy as np
 import termios, tty
 from pynput.keyboard import Key, Listener
 
+import simpleaudio as sa
+
 
 class myDataLogger():
 	def __init__(self):
 		rospy.init_node('data_collection_node', anonymous=True, disable_signals=False)
+		self.wave_obj = sa.WaveObject.from_wave_file('/home/kia/catkin_ws/src/data_collection_human_test/assets/beep-07a.wav')
 		self.settings = termios.tcgetattr(sys.stdin)
 
 		while input("press enter to start saving data, or type ctrl c then n to not: ") != "n":
@@ -29,6 +32,9 @@ class myDataLogger():
 			self.object_marker = []
 			self.fixed_marker  = []
 			self.t0 = 0
+			self.t1 = 0
+			self.rate = 0
+			self.end_data_collection_counter = 0
 
 			self.listener = Listener(on_press=self.start_collection)
 			self.listener.start()
@@ -43,46 +49,64 @@ class myDataLogger():
 			
 			self.counter = 0
 			self.prev_i = 0
+			self.task_start_time_step = 0
+			self.task_end_time_step = 0
 			self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, queue_size=1, slop=0.1, allow_headerless=True)
 			self.ts.registerCallback(self.read_data)
 			rate = rospy.Rate(1000)
-			print('\a')
+			
 			time.sleep(1)
-			print('\a')
+			play_obj = self.wave_obj.play()
 			time.sleep(1)
-			print('\a')
+			play_obj = self.wave_obj.play()
+			time.sleep(1)
+			play_obj = self.wave_obj.play()
+			play_obj.wait_done()
 			while (not rospy.is_shutdown()) and (self.stop is False):
-				if self.prev_i!=0 and self.subscriber_flag==True and self.t0 == 0:
+
+				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.45 and self.t0 == 0:
+					# save the motion start time and index 
 					self.t0 = time.time()
-					print("start time: ", self.t0)
+					self.task_start_time_step = self.counter
+				elif self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > self.fixed_marker[-1][0] and self.t1 == 0:
+					# save the motion end time and index 
+					self.t1 = time.time()
+					self.task_end_time_step = self.counter
+				
 				self.prev_i += 1
 				rate.sleep()
-			self.t1 = time.time()
+			
 			self.task_completion_time = self.t1 - self.t0
 			# self.end_subscription()
 			self.stop = False
 			self.stop_time = datetime.datetime.now()
 			
-			self.rate = (len(self.xelaSensor1)) / (self.t1 - self.t0)
+			if self.t0!=0 and self.t1!=0:
+				self.rate = (len(self.xelaSensor1)) / (self.t1 - self.t0)
 			print("\n Stopped the data collection \n now saving the stored data")
 			self.listener.stop()
 			self.save_data()
 
 	def read_data(self, hand_imu_data, object_imu_data, xela_data, object_marker_data, fixed_marker_data):
-		if (-0.39 < object_marker_data.pose.position.x < fixed_marker_data.pose.position.x) or object_marker_data.pose.position.x == 10:
-			self.subscriber_flag = True
-			self.hand_imu.append(hand_imu_data.data)
-			self.objet_imu.append(object_imu_data.data)
-			self.xelaSensor1.append(xela_data.data)
-			self.object_marker.append([object_marker_data.pose.position.x, object_marker_data.pose.position.y, object_marker_data.pose.position.z,
-									object_marker_data.pose.orientation.x, object_marker_data.pose.orientation.y, object_marker_data.pose.orientation.z,
-									object_marker_data.pose.orientation.w])
-			self.fixed_marker.append([fixed_marker_data.pose.position.x, fixed_marker_data.pose.position.y, fixed_marker_data.pose.position.z,
-									fixed_marker_data.pose.orientation.x, fixed_marker_data.pose.orientation.y, fixed_marker_data.pose.orientation.z,
-									fixed_marker_data.pose.orientation.w])
-		elif (object_marker_data.pose.position.x > fixed_marker_data.pose.position.x) and (object_marker_data.pose.position.x < 9):
-			self.stop = True
-			self.end_subscription()
+		# if (-0.39 < object_marker_data.pose.position.x < fixed_marker_data.pose.position.x) or object_marker_data.pose.position.x == 10:
+		# -0.45 < object_marker_x < fixed_marker_x
+		self.counter += 1
+		self.subscriber_flag = True
+		self.hand_imu.append(hand_imu_data.data)
+		self.objet_imu.append(object_imu_data.data)
+		self.xelaSensor1.append(xela_data.data)
+		self.object_marker.append([object_marker_data.pose.position.x, object_marker_data.pose.position.y, object_marker_data.pose.position.z,
+								object_marker_data.pose.orientation.x, object_marker_data.pose.orientation.y, object_marker_data.pose.orientation.z,
+								object_marker_data.pose.orientation.w])
+		self.fixed_marker.append([fixed_marker_data.pose.position.x, fixed_marker_data.pose.position.y, fixed_marker_data.pose.position.z,
+								fixed_marker_data.pose.orientation.x, fixed_marker_data.pose.orientation.y, fixed_marker_data.pose.orientation.z,
+								fixed_marker_data.pose.orientation.w])
+		
+		# if (object_marker_data.pose.position.x > fixed_marker_data.pose.position.x) and (object_marker_data.pose.position.x < 9):
+		# 	self.end_data_collection_counter += 1
+		# 	if self.end_data_collection_counter > 50:
+		# 		self.stop = True
+		# 		self.end_subscription()
 		
 	def end_subscription(self):
 		self.listener.stop()
@@ -115,7 +139,7 @@ class myDataLogger():
 		T4 = pd.DataFrame(self.object_marker)
 		T5 = pd.DataFrame(self.fixed_marker)
 
-		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/subject_003/controlled/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/subject_004/controlled/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
 		mydir = os.mkdir(self.folder)
 
 		imu_save_col = ["q0", "q1", "q2", "q3", "acc_x", "acc_y", "acc_z"]
@@ -140,8 +164,8 @@ class myDataLogger():
 		for info in meta_data:
 			value = input(str("please enter the " + info))
 			meta_data_ans.append(value)
-		meta_data.extend(('frequency_hz', 'start_time', 'stop_time', 'task_completion_time'))
-		meta_data_ans.extend((str(self.rate), str(self.start_time), str(self.stop_time), str(self.task_completion_time)))
+		meta_data.extend(('frequency_hz', 'start_time', 'stop_time', 'task_completion_time', 'start_index', 'end_index'))
+		meta_data_ans.extend((str(self.rate), str(self.start_time), str(self.stop_time), str(self.task_completion_time), str(self.task_start_time_step), str(self.task_end_time_step)))
 		meta_data_ans = np.array([meta_data_ans])
 		T5 = pd.DataFrame(meta_data_ans)
 		T5.to_csv(self.folder + '/meta_data.csv', header=meta_data, index=False)
