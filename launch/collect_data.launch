@@ -17,7 +17,8 @@
   <!-- xela publisher script node -->
   <node name="xela_publisher" pkg="data_collection_human_test" type="cal_xela_publisher.py"/>
   
-  <!-- <node name="imu_publisher" pkg="data_collection_human_test" type="IMUROS.py"/>
-  <node name="data_collection_node" pkg="data_collection_human_test" type="data_sub.py"/> -->
+  <node name="imu_publisher" pkg="data_collection_human_test" type="IMUROS.py"/>
+  <node name="imu_publisher" pkg="data_collection_human_test" type="IMUROS2.py"/>
+  <!-- <node name="data_collection_node" pkg="data_collection_human_test" type="data_sub.py"/> -->
 
 </launch>

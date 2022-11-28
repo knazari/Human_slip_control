@@ -21,6 +21,7 @@ class myDataLogger():
 	def __init__(self):
 		rospy.init_node('data_collection_node', anonymous=True, disable_signals=False)
 		self.wave_obj = sa.WaveObject.from_wave_file('/home/kia/catkin_ws/src/data_collection_human_test/assets/beep-07a.wav')
+		self.wave_obj2 = sa.WaveObject.from_wave_file('/home/kia/catkin_ws/src/data_collection_human_test/assets/beep-08b.wav')
 		self.settings = termios.tcgetattr(sys.stdin)
 
 		while input("press enter to start saving data, or type ctrl c then n to not: ") != "n":
@@ -33,6 +34,7 @@ class myDataLogger():
 			self.fixed_marker  = []
 			self.t0 = 0
 			self.t1 = 0
+			self.t2 = 0
 			self.rate = 0
 			self.end_data_collection_counter = 0
 
@@ -50,6 +52,7 @@ class myDataLogger():
 			self.counter = 0
 			self.prev_i = 0
 			self.task_start_time_step = 0
+			self.task_middle_time_step = 0
 			self.task_end_time_step = 0
 			self.ts = message_filters.ApproximateTimeSynchronizer(subscribers, queue_size=1, slop=0.1, allow_headerless=True)
 			self.ts.registerCallback(self.read_data)
@@ -62,17 +65,36 @@ class myDataLogger():
 			time.sleep(1)
 			play_obj = self.wave_obj.play()
 			play_obj.wait_done()
+			# time.sleep(3)
 			while (not rospy.is_shutdown()) and (self.stop is False):
 
-				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.45 and self.t0 == 0:
+				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.48 and self.t0 == 0:
 					# save the motion start time and index 
 					self.t0 = time.time()
 					self.task_start_time_step = self.counter
 				elif self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > self.fixed_marker[-1][0] and self.t1 == 0:
-					# save the motion end time and index 
+					# save the forward motion end time and index 
 					self.t1 = time.time()
+					self.task_middle_time_step = self.counter
+				elif self.prev_i!=0 and self.object_marker and self.object_marker[-1][0] < -0.48 and self.t0!=0 and self.t2==0:
+					# save the motion end time and index
+					self.t2 = time.time()
 					self.task_end_time_step = self.counter
 				
+
+				# # if self.t0 != 0 and 0.199955555 < (time.time() - self.t0) < 0.2020000:
+				# # 	play_obj = self.wave_obj.play()
+				# # 	play_obj.wait_done()
+				# if self.t0 != 0 and 0.39999555 < (time.time() - self.t0) < 0.4020000:
+				# 	play_obj = self.wave_obj.play()
+				# 	play_obj.wait_done()
+				# # elif self.t0 != 0 and 0.59555555 < (time.time() - self.t0) < 0.60020000:
+				# # 	play_obj = self.wave_obj.play()
+				# # 	play_obj.wait_done()
+				# elif self.t0 != 0 and 0.799955555 < (time.time() - self.t0) < 0.80200000:
+				# 	play_obj = self.wave_obj.play()
+				# 	play_obj.wait_done()
+
 				self.prev_i += 1
 				rate.sleep()
 			
@@ -82,7 +104,7 @@ class myDataLogger():
 			self.stop_time = datetime.datetime.now()
 			
 			if self.t0!=0 and self.t1!=0:
-				self.rate = (len(self.xelaSensor1)) / (self.t1 - self.t0)
+				self.rate = (len(self.xelaSensor1[self.task_start_time_step:self.task_end_time_step])) / (self.t2 - self.t0)
 			print("\n Stopped the data collection \n now saving the stored data")
 			self.listener.stop()
 			self.save_data()
@@ -164,8 +186,8 @@ class myDataLogger():
 		for info in meta_data:
 			value = input(str("please enter the " + info))
 			meta_data_ans.append(value)
-		meta_data.extend(('frequency_hz', 'start_time', 'stop_time', 'task_completion_time', 'start_index', 'end_index'))
-		meta_data_ans.extend((str(self.rate), str(self.start_time), str(self.stop_time), str(self.task_completion_time), str(self.task_start_time_step), str(self.task_end_time_step)))
+		meta_data.extend(('frequency_hz', 'start_time', 'stop_time', 'task_completion_time', 'start_index', 'middle_index', 'end_index'))
+		meta_data_ans.extend((str(self.rate), str(self.start_time), str(self.stop_time), str(self.task_completion_time), str(self.task_start_time_step), str(self.task_middle_time_step), str(self.task_end_time_step)))
 		meta_data_ans = np.array([meta_data_ans])
 		T5 = pd.DataFrame(meta_data_ans)
 		T5.to_csv(self.folder + '/meta_data.csv', header=meta_data, index=False)
