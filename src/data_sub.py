@@ -65,7 +65,7 @@ class myDataLogger():
 			time.sleep(1)
 			play_obj = self.wave_obj.play()
 			play_obj.wait_done()
-			# time.sleep(3)
+			
 			while (not rospy.is_shutdown()) and (self.stop is False):
 
 				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.48 and self.t0 == 0:
@@ -82,18 +82,12 @@ class myDataLogger():
 					self.task_end_time_step = self.counter
 				
 
-				# # if self.t0 != 0 and 0.199955555 < (time.time() - self.t0) < 0.2020000:
-				# # 	play_obj = self.wave_obj.play()
-				# # 	play_obj.wait_done()
-				# if self.t0 != 0 and 0.39999555 < (time.time() - self.t0) < 0.4020000:
-				# 	play_obj = self.wave_obj.play()
-				# 	play_obj.wait_done()
-				# # elif self.t0 != 0 and 0.59555555 < (time.time() - self.t0) < 0.60020000:
-				# # 	play_obj = self.wave_obj.play()
-				# # 	play_obj.wait_done()
-				# elif self.t0 != 0 and 0.799955555 < (time.time() - self.t0) < 0.80200000:
-				# 	play_obj = self.wave_obj.play()
-				# 	play_obj.wait_done()
+				if self.t0 != 0 and 0.39999555 < (time.time() - self.t0) < 0.4020000:
+					play_obj = self.wave_obj.play()
+					play_obj.wait_done()
+				elif self.t0 != 0 and 0.799955555 < (time.time() - self.t0) < 0.80200000:
+					play_obj = self.wave_obj.play()
+					play_obj.wait_done()
 
 				self.prev_i += 1
 				rate.sleep()
@@ -110,8 +104,6 @@ class myDataLogger():
 			self.save_data()
 
 	def read_data(self, hand_imu_data, object_imu_data, xela_data, object_marker_data, fixed_marker_data):
-		# if (-0.39 < object_marker_data.pose.position.x < fixed_marker_data.pose.position.x) or object_marker_data.pose.position.x == 10:
-		# -0.45 < object_marker_x < fixed_marker_x
 		self.counter += 1
 		self.subscriber_flag = True
 		self.hand_imu.append(hand_imu_data.data)
@@ -123,12 +115,6 @@ class myDataLogger():
 		self.fixed_marker.append([fixed_marker_data.pose.position.x, fixed_marker_data.pose.position.y, fixed_marker_data.pose.position.z,
 								fixed_marker_data.pose.orientation.x, fixed_marker_data.pose.orientation.y, fixed_marker_data.pose.orientation.z,
 								fixed_marker_data.pose.orientation.w])
-		
-		# if (object_marker_data.pose.position.x > fixed_marker_data.pose.position.x) and (object_marker_data.pose.position.x < 9):
-		# 	self.end_data_collection_counter += 1
-		# 	if self.end_data_collection_counter > 50:
-		# 		self.stop = True
-		# 		self.end_subscription()
 		
 	def end_subscription(self):
 		self.listener.stop()
@@ -161,7 +147,7 @@ class myDataLogger():
 		T4 = pd.DataFrame(self.object_marker)
 		T5 = pd.DataFrame(self.fixed_marker)
 
-		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/subject_004/controlled/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/pilot_test2/subject_002/controlled/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
 		mydir = os.mkdir(self.folder)
 
 		imu_save_col = ["q0", "q1", "q2", "q3", "acc_x", "acc_y", "acc_z"]
