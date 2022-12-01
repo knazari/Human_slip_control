@@ -20,10 +20,6 @@ def sigmoid_time(x, mean, scale_suc, scale_fail):
 #   return -1 / (1 + math.exp(-(x-50)/14)) + 1
 
 def sigmoid_rot(x, mean, scale_suc, scale_fail):
-  # if x <= mean:
-  #   x = -1 / (1 + math.exp(-(x-mean)/scale_suc)) + 1
-  # else:
-  #   x = -1 / (1 + math.exp(-(x-mean)/scale_fail)) + 1
   x = -1 / (1 + math.exp(-(x-mean)/scale_suc)) + 1
   return x
 
@@ -33,27 +29,27 @@ def sigmoid_scaling(x, mean_, scale_suc):
     return x
     
 
-mean_time = 60
-scale_suc_time = 5
+mean_time = 80
+scale_suc_time = 7
 scale_fail_time = 30
 
-mean_rot = .5
-scale_suc_rot = .5
-scale_fail_rot = 0
+mean_rot = 20
+scale_suc_rot = 1.3
+scale_fail_rot = 8
 
 sigmoid_time_vec = np.vectorize(sigmoid_time)
-x_vec = np.linspace(-20, 120, 140)
+x_vec = np.linspace(30, 150, 140)
 
 ax = plt.axes()
 ax.plot(x_vec, sigmoid_time_vec(x_vec[:], mean_time, scale_suc_time, scale_fail_time), linewidth=2, c='blue')
-ax.hlines(sigmoid_time(30, mean_time, scale_suc_time, scale_fail_time), -20, 30, color='black', alpha=0.6, linewidth=0.6)
-ax.hlines(sigmoid_time(60, mean_time, scale_suc_time, scale_fail_time), -20, 60, color='black', alpha=0.6, linewidth=0.6)
-ax.hlines(sigmoid_time(90, mean_time, scale_suc_time, scale_fail_time), -20, 90, color='black', alpha=0.6, linewidth=0.6)
-ax.vlines(30, 0, sigmoid_time(30, mean_time, scale_suc_time, scale_fail_time), color='black', alpha=0.6, linewidth=0.6)
-ax.vlines(60, 0, sigmoid_time(60, mean_time, scale_suc_time, scale_fail_time), color='black', alpha=0.6, linewidth=0.6)
-ax.vlines(90, 0, sigmoid_time(90, mean_time, scale_suc_time, scale_fail_time), color='black', alpha=0.6, linewidth=0.6)
-ax.set_xticks(np.arange(0, 110, 30))
-ax.set_yticks([0, sigmoid_time(30, mean_time, scale_suc_time, scale_fail_time), sigmoid_time(60, mean_time, scale_suc_time, scale_fail_time), sigmoid_time(90, mean_time, scale_suc_time, scale_fail_time), 1.0])
+ax.hlines(sigmoid_time(40, mean_time, scale_suc_time, scale_fail_time), -20, 40, color='black', alpha=0.6, linewidth=0.6)
+ax.hlines(sigmoid_time(mean_time, mean_time, scale_suc_time, scale_fail_time), -20, mean_time, color='black', alpha=0.6, linewidth=0.6)
+ax.hlines(sigmoid_time(120, mean_time, scale_suc_time, scale_fail_time), -20, 120, color='black', alpha=0.6, linewidth=0.6)
+ax.vlines(40, 0, sigmoid_time(40, mean_time, scale_suc_time, scale_fail_time), color='black', alpha=0.6, linewidth=0.6)
+ax.vlines(mean_time, 0, sigmoid_time(mean_time, mean_time, scale_suc_time, scale_fail_time), color='black', alpha=0.6, linewidth=0.6)
+ax.vlines(120, 0, sigmoid_time(120, mean_time, scale_suc_time, scale_fail_time), color='black', alpha=0.6, linewidth=0.6)
+ax.set_xticks(np.arange(0, 110, 40))
+ax.set_yticks([0, sigmoid_time(40, mean_time, scale_suc_time, scale_fail_time), sigmoid_time(mean_time, mean_time, scale_suc_time, scale_fail_time), sigmoid_time(120, mean_time, scale_suc_time, scale_fail_time), 1.0])
 ax.tick_params(axis='both', which='major', labelsize=14)
 ax.set_title("Time score", fontsize=22)
 ax.set_xlabel("Time increase w.r.t baseline average (%)", fontsize=16, labelpad=8)
@@ -62,7 +58,7 @@ ax.spines['right'].set_visible(False)
 plt.figure()
 
 sigmoid_rot_vec = np.vectorize(sigmoid_rot)
-x_vec = np.linspace(-5, 5, 40)
+x_vec = np.linspace(10, 40, 30)
 
 ax = plt.axes()
 ax.plot(x_vec, sigmoid_rot_vec(x_vec[:], mean_rot, scale_suc_rot, scale_fail_rot), linewidth=2, c='blue')

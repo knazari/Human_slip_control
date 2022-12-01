@@ -21,7 +21,6 @@ class myDataLogger():
 	def __init__(self):
 		rospy.init_node('data_collection_node', anonymous=True, disable_signals=False)
 		self.wave_obj = sa.WaveObject.from_wave_file('/home/kia/catkin_ws/src/data_collection_human_test/assets/beep-07a.wav')
-		self.wave_obj2 = sa.WaveObject.from_wave_file('/home/kia/catkin_ws/src/data_collection_human_test/assets/beep-08b.wav')
 		self.settings = termios.tcgetattr(sys.stdin)
 
 		while input("press enter to start saving data, or type ctrl c then n to not: ") != "n":
@@ -36,7 +35,6 @@ class myDataLogger():
 			self.t1 = 0
 			self.t2 = 0
 			self.rate = 0
-			self.end_data_collection_counter = 0
 
 			self.listener = Listener(on_press=self.start_collection)
 			self.listener.start()
@@ -68,7 +66,7 @@ class myDataLogger():
 			
 			while (not rospy.is_shutdown()) and (self.stop is False):
 
-				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.48 and self.t0 == 0:
+				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.49 and self.t0 == 0:
 					# save the motion start time and index 
 					self.t0 = time.time()
 					self.task_start_time_step = self.counter
@@ -76,11 +74,10 @@ class myDataLogger():
 					# save the forward motion end time and index 
 					self.t1 = time.time()
 					self.task_middle_time_step = self.counter
-				elif self.prev_i!=0 and self.object_marker and self.object_marker[-1][0] < -0.48 and self.t0!=0 and self.t2==0:
+				elif self.prev_i!=0 and self.object_marker and self.object_marker[-1][0] < -0.49 and self.t0!=0 and self.t2==0:
 					# save the motion end time and index
 					self.t2 = time.time()
-					self.task_end_time_step = self.counter
-				
+					self.task_end_time_step = self.counter	
 
 				if self.t0 != 0 and 0.39999555 < (time.time() - self.t0) < 0.4020000:
 					play_obj = self.wave_obj.play()
@@ -92,12 +89,12 @@ class myDataLogger():
 				self.prev_i += 1
 				rate.sleep()
 			
-			self.task_completion_time = self.t1 - self.t0
+			self.task_completion_time = self.t2 - self.t0
 			# self.end_subscription()
 			self.stop = False
 			self.stop_time = datetime.datetime.now()
 			
-			if self.t0!=0 and self.t1!=0:
+			if self.t0!=0 and self.t2!=0:
 				self.rate = (len(self.xelaSensor1[self.task_start_time_step:self.task_end_time_step])) / (self.t2 - self.t0)
 			print("\n Stopped the data collection \n now saving the stored data")
 			self.listener.stop()
@@ -147,7 +144,7 @@ class myDataLogger():
 		T4 = pd.DataFrame(self.object_marker)
 		T5 = pd.DataFrame(self.fixed_marker)
 
-		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/pilot_test2/subject_002/controlled/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/real_test/subject_001/baseline/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
 		mydir = os.mkdir(self.folder)
 
 		imu_save_col = ["q0", "q1", "q2", "q3", "acc_x", "acc_y", "acc_z"]
