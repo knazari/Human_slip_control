@@ -1,0 +1,2 @@
+user,gender,frequency_hz,start_time,stop_time,task_completion_time,start_index,middle_index,end_index
+021,m,60.000444303324535,2022-12-12 12:17:17.259796,2022-12-12 12:17:29.402648,0.8499937057495117,485,505,536

@@ -7,7 +7,7 @@ import math
 import serial
 from std_msgs.msg import Float64MultiArray
 
-ad1 = serial.Serial('/dev/ttyUSB0',115200)
+ad1 = serial.Serial('/dev/ttyUSB4',115200)
 sleep(1)
 
 rospy.init_node('IMU_data', anonymous=True)

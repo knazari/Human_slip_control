@@ -18,7 +18,7 @@ def smooth(x,window_len=11,window='hanning'):
     return y[int((window_len/2-1)):-int((window_len/2))]
 
 
-user_path = "/home/kia/catkin_ws/src/data_collection_human_test/data/pilot_test2/subject_001/baseline"
+user_path = "/home/kia/catkin_ws/src/data_collection_human_test/data/real_test/subject_014/baseline"
 files = sorted(glob.glob(user_path + "/*"))
 
 rotation_full     = []
@@ -27,38 +27,6 @@ acceleration_full = []
 fig, ax = plt.subplots(2)
 
 for index, file in enumerate(files):
-    if index == 0:
-        # start_index = 250
-        # end_index   = 300
-        continue
-    elif index ==1:
-        # start_index = 278
-        # end_index   = 342
-        continue
-    elif index ==2:
-        start_index = 480
-        end_index   = 580
-    elif index ==3:
-        start_index = 480
-        end_index   = 580
-    elif index ==4:
-        start_index = 430
-        end_index   = 530
-    elif index ==5:
-        start_index = 350
-        end_index   = 450
-    elif index ==6:
-        start_index = 350
-        end_index   = 450
-    elif index ==7:
-        start_index = 360
-        end_index   = 460
-    elif index ==8:
-        start_index = 375
-        end_index   = 475
-    elif index ==9:
-        start_index = 360
-        end_index   = 460
     
     meta_data       = pd.read_csv(file + '/meta_data.csv')
     hand_imu        = pd.read_csv(file + '/hand_imu.csv')
@@ -66,12 +34,41 @@ for index, file in enumerate(files):
     xela_data       = pd.read_csv(file + '/xela.csv')[['txl1_z', 'txl2_z', 'txl3_z', 'txl4_z', 'txl5_z', 'txl6_z', 'txl7_z', 'txl8_z', 'txl9_z', 'txl10_z',
                                                         'txl11_z', 'txl12_z', 'txl13_z', 'txl14_z', 'txl15_z', 'txl16_z']]
     
-    # start_index = meta_data['start_index'][0]
-    # end_index   = meta_data['end_index'][0]
+    start_index = meta_data['start_index'][0] - 20
+    end_index   = meta_data['end_index'][0] + 30
+    if index == 0:
+        start_index += 7
+        end_index += 0
+    if index == 1:
+        start_index -= 15
+        end_index += 0
+    elif index == 3:
+        start_index -= 15
+        end_index += 0
+    elif index == 4:
+        start_index -= 15
+        end_index += 0
+    elif index == 5:
+        start_index -= 15
+        end_index += 0
+    elif index == 6:
+        start_index += 5
+        end_index += 0
+    elif index == 7:
+        start_index -= 15
+        end_index += 0
+    elif index == 8:
+        start_index += 3
+        end_index += 0
+    elif index == 9:
+        start_index -= 15
+        end_index += 0
 
+    # if index != 9:
     # Object rotation
-    object_imu_rot  = R.from_quat(object_imu[['q1', 'q2', 'q3', 'q0']]).as_euler('zyx', degrees=True)
-    object_rotation = smooth(object_imu_rot[start_index:end_index, 0] - object_imu_rot[start_index, 0])
+    object_imu_rot  = R.from_quat(object_imu[['q1', 'q2', 'q3', 'q0']]).as_euler('xyx', degrees=True)
+    object_rotation = smooth(object_imu_rot[start_index:end_index, 1] - object_imu_rot[start_index, 1])
+    # object_rotation = smooth(object_imu_rot[:, 1] - object_imu_rot[0, 1])
     rotation_full.append(object_rotation - object_rotation[0])
 
     # Hand acceleration
@@ -82,7 +79,9 @@ for index, file in enumerate(files):
     
     # Max grip force
     xela_data = np.array(xela_data[start_index:end_index])
-    max_normal_force.append(np.max(np.sum(xela_data, axis=1)))
+    # max_normal_force.append(np.max(np.sum(xela_data, axis=1)))
+    xela_data = np.sum(xela_data, axis=1)
+    # ax[2].plot(smooth(xela_data), c='b')
 
     
     # fig, ax = plt.subplots(2)
@@ -97,11 +96,12 @@ for index, file in enumerate(files):
     # ax[0].set_xticks(np.arange(0, len(object_rotation), 50))
     # ax[1].set_xticks(np.arange(0, len(object_rotation), 50))
 
+# plt.show()
 rotation_full_aligned = []
 acceleration_full_aligned = []
 
 for i in range(len(rotation_full)):
-    alignment = dtw(rotation_full[1],rotation_full[i], keep_internals=True, 
+    alignment = dtw(rotation_full[4],rotation_full[i], keep_internals=True, 
     step_pattern=rabinerJuangStepPattern(6, "c"))
 
     rebuilt_vec = np.zeros(len(alignment.index2))
@@ -111,7 +111,7 @@ for i in range(len(rotation_full)):
     rotation_full_aligned.append(rebuilt_vec)
 
 for i in range(len(acceleration_full)):
-    alignment = dtw(acceleration_full[3],acceleration_full[i], keep_internals=True, 
+    alignment = dtw(acceleration_full[4],acceleration_full[i], keep_internals=True, 
     step_pattern=rabinerJuangStepPattern(6, "c"))
 
     rebuilt_vec = np.zeros(len(alignment.index2))
@@ -126,7 +126,9 @@ for i in range(len(acceleration_full_aligned)):
     ax[0].plot(smooth(rotation_full_aligned[i]), c='b')
     ax[1].plot(smooth(acceleration_full_aligned[i]), c='b')
 
-user_path = "/home/kia/catkin_ws/src/data_collection_human_test/data/pilot_test2/subject_001/controlled"
+# # plt.show()
+
+user_path = "/home/kia/catkin_ws/src/data_collection_human_test/data/real_test/subject_014/controlled"
 files = sorted(glob.glob(user_path + "/*"))
 
 rotation_full     = []
@@ -134,36 +136,6 @@ max_normal_force  = []
 acceleration_full = []
 
 for index, file in enumerate(files):
-    if index == 0:
-        start_index = 380
-        end_index   = -25
-    elif index ==1:
-        start_index = 425
-        end_index   = -30
-    elif index ==2:
-        start_index = 400
-        end_index   = -10
-    elif index ==3:
-        start_index = 455
-        end_index   = -5
-    elif index ==4:
-        start_index = 400
-        end_index   = -1
-    elif index ==5:
-        start_index = 580
-        end_index   = -10
-    elif index ==6:
-        start_index = 380
-        end_index   = 550
-    elif index ==7:
-        start_index = 420
-        end_index   = -1
-    elif index ==8:
-        start_index = 430
-        end_index   = -1
-    elif index ==9:
-        start_index = 460
-        end_index   = -1
     
     meta_data       = pd.read_csv(file + '/meta_data.csv')
     hand_imu        = pd.read_csv(file + '/hand_imu.csv')
@@ -171,12 +143,12 @@ for index, file in enumerate(files):
     xela_data       = pd.read_csv(file + '/xela.csv')[['txl1_z', 'txl2_z', 'txl3_z', 'txl4_z', 'txl5_z', 'txl6_z', 'txl7_z', 'txl8_z', 'txl9_z', 'txl10_z',
                                                         'txl11_z', 'txl12_z', 'txl13_z', 'txl14_z', 'txl15_z', 'txl16_z']]
     
-    # start_index = meta_data['start_index'][0]
-    # end_index   = meta_data['end_index'][0]
+    start_index = meta_data['start_index'][0] - 20
+    end_index   = meta_data['end_index'][0] + 30
 
     # Object rotation
-    object_imu_rot  = R.from_quat(object_imu[['q1', 'q2', 'q3', 'q0']]).as_euler('zyx', degrees=True)
-    object_rotation = smooth(object_imu_rot[start_index:end_index, 0] - object_imu_rot[start_index, 0])
+    object_imu_rot  = R.from_quat(object_imu[['q1', 'q2', 'q3', 'q0']]).as_euler('xyx', degrees=True)
+    object_rotation = smooth(object_imu_rot[start_index:end_index, 1] - object_imu_rot[start_index, 1])
     rotation_full.append(object_rotation - object_rotation[0])
 
     # Hand acceleration
@@ -189,11 +161,11 @@ for index, file in enumerate(files):
     xela_data = np.array(xela_data[start_index:end_index])
     max_normal_force.append(np.max(np.sum(xela_data, axis=1)))
 
-    # ax[0].plot(object_rotation, c='r')
-    # ax[1].plot(acceleration, c='r')
+    ax[0].plot(object_rotation, c='r')
+    ax[1].plot(acceleration, c='r')
 
-    # ax[0].set_xticks(np.arange(0, len(object_rotation), 50))
-    # ax[1].set_xticks(np.arange(0, len(object_rotation), 50))
+    ax[0].set_xticks(np.arange(0, len(object_rotation), 50))
+    ax[1].set_xticks(np.arange(0, len(object_rotation), 50))
 
 rotation_full_aligned = []
 acceleration_full_aligned = []
@@ -242,4 +214,5 @@ ax[0].yaxis.set_tick_params(labelsize=12)
 ax[1].yaxis.set_tick_params(labelsize=12)
 ax[0].grid()
 ax[1].grid()
+fig.suptitle("Subject 4", fontsize=20)
 plt.show()

@@ -16,6 +16,13 @@ from pynput.keyboard import Key, Listener
 
 import simpleaudio as sa
 
+name = "subject_024"
+# stage = "baseline_familiarization"
+# stage = "baseline"
+# stage = "controlled_familiarization"
+stage = "controlled"
+
+# changes not 
 
 class myDataLogger():
 	def __init__(self):
@@ -56,35 +63,43 @@ class myDataLogger():
 			self.ts.registerCallback(self.read_data)
 			rate = rospy.Rate(1000)
 			
-			time.sleep(1)
-			play_obj = self.wave_obj.play()
-			time.sleep(1)
-			play_obj = self.wave_obj.play()
-			time.sleep(1)
-			play_obj = self.wave_obj.play()
-			play_obj.wait_done()
-			
+			self.data_collection_start_time = time.time()
 			while (not rospy.is_shutdown()) and (self.stop is False):
+				loop_time = time.time()
 
 				if self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > -0.49 and self.t0 == 0:
 					# save the motion start time and index 
-					self.t0 = time.time()
+					self.t0 = loop_time
 					self.task_start_time_step = self.counter
 				elif self.prev_i!=0 and self.object_marker and 9 > self.object_marker[-1][0] > self.fixed_marker[-1][0] and self.t1 == 0:
 					# save the forward motion end time and index 
-					self.t1 = time.time()
+					self.t1 = loop_time
 					self.task_middle_time_step = self.counter
 				elif self.prev_i!=0 and self.object_marker and self.object_marker[-1][0] < -0.49 and self.t0!=0 and self.t2==0:
 					# save the motion end time and index
-					self.t2 = time.time()
+					self.t2 = loop_time
 					self.task_end_time_step = self.counter	
 
-				if self.t0 != 0 and 0.39999555 < (time.time() - self.t0) < 0.4020000:
+				
+				if 1.99 < (loop_time - self.data_collection_start_time) < 2.01:
 					play_obj = self.wave_obj.play()
 					play_obj.wait_done()
-				elif self.t0 != 0 and 0.799955555 < (time.time() - self.t0) < 0.80200000:
+				elif 5.99 < (loop_time - self.data_collection_start_time) < 6.01:
 					play_obj = self.wave_obj.play()
 					play_obj.wait_done()
+				elif 7.99 < (loop_time - self.data_collection_start_time) < 8.01:
+					play_obj = self.wave_obj.play()
+					play_obj.wait_done()
+				elif self.t2!=0 and 0.99 < (loop_time - self.t2) < 1.01:
+					play_obj = self.wave_obj.play()
+					play_obj.wait_done()
+				
+				# if self.t0 != 0 and 0.39999555 < (loop_time - self.t0) < 0.4020000:
+				# 	play_obj = self.wave_obj.play()
+				# 	play_obj.wait_done()
+				# elif self.t0 != 0 and 0.799955555 < (loop_time - self.t0) < 0.80200000:
+				# 	play_obj = self.wave_obj.play()
+				# 	play_obj.wait_done()
 
 				self.prev_i += 1
 				rate.sleep()
@@ -144,7 +159,7 @@ class myDataLogger():
 		T4 = pd.DataFrame(self.object_marker)
 		T5 = pd.DataFrame(self.fixed_marker)
 
-		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/real_test/subject_001/baseline/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
+		self.folder = str('/home/kia/catkin_ws/src/data_collection_human_test/data/real_test2/' + name + '/' + stage + '/data_sample_' + datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S'))
 		mydir = os.mkdir(self.folder)
 
 		imu_save_col = ["q0", "q1", "q2", "q3", "acc_x", "acc_y", "acc_z"]
